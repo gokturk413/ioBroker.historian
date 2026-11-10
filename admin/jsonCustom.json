@@ -1,0 +1,45 @@
+{
+    "i18n": false,
+    "type": "panel",
+    "items": {
+        "enabled": { "type": "checkbox", "label": "History on", "sm": 12, "md": 12 },
+        "writeMode": {
+            "type": "select",
+            "label": "Write",
+            "options": [
+                { "label": "on change", "value": "change" },
+                { "label": "every N seconds", "value": "interval" },
+                { "label": "on change, but at least every N seconds", "value": "changeOrInterval" }
+            ],
+            "default": "change",
+            "hidden": "!data.enabled",
+            "sm": 12,
+            "md": 6,
+            "newLine": true
+        },
+        "writeInterval": { "type": "number", "label": "N (seconds)", "min": 0, "default": 0, "hidden": "!data.enabled || data.writeMode === 'change'", "sm": 12, "md": 3 },
+        "changesMinDelta": { "type": "number", "label": "Deadband (absolute)", "min": 0, "default": 0, "hidden": "!data.enabled", "sm": 12, "md": 3, "newLine": true },
+        "changesMinDeltaPercent": { "type": "number", "label": "Deadband (% of min..max)", "min": 0, "max": 100, "default": 0, "hidden": "!data.enabled", "sm": 12, "md": 3 },
+        "debounceTime": { "type": "number", "label": "Debounce (ms): log the value once it is stable", "min": 0, "default": 0, "hidden": "!data.enabled", "sm": 12, "md": 3 },
+        "ignoreZero": { "type": "checkbox", "label": "Ignore 0 and null", "default": false, "hidden": "!data.enabled", "sm": 12, "md": 3, "newLine": true },
+        "ignoreBelowNumber": { "type": "text", "label": "Ignore below", "hidden": "!data.enabled", "sm": 12, "md": 3 },
+        "ignoreAboveNumber": { "type": "text", "label": "Ignore above", "hidden": "!data.enabled", "sm": 12, "md": 3 },
+        "storageType": {
+            "type": "select",
+            "label": "Store as",
+            "options": [
+                { "label": "as it comes", "value": "" },
+                { "label": "Number", "value": "Number" },
+                { "label": "String", "value": "String" },
+                { "label": "Boolean", "value": "Boolean" }
+            ],
+            "default": "",
+            "hidden": "!data.enabled",
+            "sm": 12,
+            "md": 3,
+            "newLine": true
+        },
+        "round": { "type": "text", "label": "Round reads to digits", "hidden": "!data.enabled", "sm": 12, "md": 3 },
+        "disableSkippedValueLogging": { "type": "checkbox", "label": "Do not log the last unchanged value before a change", "default": false, "hidden": "!data.enabled || data.writeMode === 'interval'", "sm": 12, "md": 6 }
+    }
+}

@@ -1,0 +1,110 @@
+{
+    "common": {
+        "name": "historian",
+        "version": "0.1.0",
+        "title": "Historian",
+        "titleLang": {
+            "en": "Historian",
+            "de": "SCADA-Verlauf",
+            "ru": "История SCADA"
+        },
+        "desc": {
+            "en": "History of states from a Valkey stream into TimescaleDB, ClickHouse or InfluxDB (native engine)",
+            "de": "Verlauf von Zuständen aus einem Valkey-Stream in TimescaleDB, ClickHouse oder InfluxDB (native Engine)",
+            "ru": "История состояний из потока Valkey в TimescaleDB, ClickHouse или InfluxDB (нативный движок)"
+        },
+        "authors": ["gokturk413 <gokturk413@gmail.com>"],
+        "keywords": ["history", "timescaledb", "clickhouse", "influxdb", "scada"],
+        "license": "UNLICENSED",
+        "platform": "Rust_Native",
+        "main": "bin/{platform}/historian",
+        "icon": "historian.svg",
+        "enabled": true,
+        "extIcon": "",
+        "readme": "",
+        "loglevel": "info",
+        "mode": "daemon",
+        "type": "storage",
+        "compact": false,
+        "connectionType": "local",
+        "dataSource": "push",
+        "supportCustoms": true,
+        "getHistory": true,
+        "messagebox": true,
+        "subscribe": "messagebox",
+        "adminUI": {
+            "config": "json",
+            "custom": "json"
+        },
+        "tier": 1,
+        "dependencies": [
+            {
+                "js-controller": ">=7.2.5"
+            }
+        ]
+    },
+    "encryptedNative": ["timescale.password", "clickhouse.password", "influxdb.token", "licenceKey"],
+    "protectedNative": ["timescale.password", "clickhouse.password", "influxdb.token", "licenceKey"],
+    "native": {
+        "backend": "timescaledb",
+        "timescale": {
+            "host": "127.0.0.1",
+            "port": 5432,
+            "user": "iobroker",
+            "password": "",
+            "database": "iobroker"
+        },
+        "clickhouse": {
+            "url": "http://127.0.0.1:8123",
+            "user": "default",
+            "password": "",
+            "database": "default",
+            "table": "history",
+            "cluster": "",
+            "quorum": 0
+        },
+        "influxdb": {
+            "url": "http://127.0.0.1:8086",
+            "token": "",
+            "org": "",
+            "bucket": "iobroker"
+        },
+        "cap": 5000000,
+        "batch": 10000,
+        "writeMode": "change",
+        "writeInterval": 0,
+        "changesMinDelta": 0,
+        "changesMinDeltaPercent": 0,
+        "debounceTime": 0,
+        "blockTime": 0,
+        "changesRelogInterval": 0,
+        "retention": 0,
+        "round": "",
+        "licenceKey": "",
+        "activationRequest": ""
+    },
+    "objects": [],
+    "instanceObjects": [
+        {
+            "_id": "info",
+            "type": "channel",
+            "common": {
+                "name": "Information"
+            },
+            "native": {}
+        },
+        {
+            "_id": "info.connection",
+            "type": "state",
+            "common": {
+                "name": "Connected to the database",
+                "type": "boolean",
+                "role": "indicator.connected",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        }
+    ]
+}

@@ -1,0 +1,84 @@
+{
+    "i18n": false,
+    "type": "tabs",
+    "items": {
+        "_database": {
+            "type": "panel",
+            "label": "Database",
+            "items": {
+                "backend": {
+                    "type": "select",
+                    "label": "Database",
+                    "options": [
+                        { "label": "TimescaleDB (PostgreSQL)", "value": "timescaledb" },
+                        { "label": "ClickHouse", "value": "clickhouse" },
+                        { "label": "InfluxDB 2", "value": "influxdb" }
+                    ],
+                    "sm": 12,
+                    "md": 6
+                },
+                "_tsHeader": { "type": "header", "text": "TimescaleDB", "size": 4, "hidden": "data.backend !== 'timescaledb'", "newLine": true },
+                "timescale.host": { "type": "text", "label": "Host", "hidden": "data.backend !== 'timescaledb'", "sm": 12, "md": 4 },
+                "timescale.port": { "type": "number", "label": "Port", "min": 1, "max": 65535, "hidden": "data.backend !== 'timescaledb'", "sm": 12, "md": 2 },
+                "timescale.database": { "type": "text", "label": "Database name", "hidden": "data.backend !== 'timescaledb'", "sm": 12, "md": 3 },
+                "timescale.user": { "type": "text", "label": "User", "hidden": "data.backend !== 'timescaledb'", "sm": 12, "md": 3, "newLine": true },
+                "timescale.password": { "type": "password", "label": "Password", "hidden": "data.backend !== 'timescaledb'", "sm": 12, "md": 3 },
+                "_chHeader": { "type": "header", "text": "ClickHouse", "size": 4, "hidden": "data.backend !== 'clickhouse'", "newLine": true },
+                "clickhouse.url": { "type": "text", "label": "HTTP address (http://host:8123)", "hidden": "data.backend !== 'clickhouse'", "sm": 12, "md": 6 },
+                "clickhouse.database": { "type": "text", "label": "Database", "hidden": "data.backend !== 'clickhouse'", "sm": 12, "md": 3 },
+                "clickhouse.table": { "type": "text", "label": "Table", "hidden": "data.backend !== 'clickhouse'", "sm": 12, "md": 3 },
+                "clickhouse.user": { "type": "text", "label": "User", "hidden": "data.backend !== 'clickhouse'", "sm": 12, "md": 3, "newLine": true },
+                "clickhouse.password": { "type": "password", "label": "Password", "hidden": "data.backend !== 'clickhouse'", "sm": 12, "md": 3 },
+                "clickhouse.cluster": { "type": "text", "label": "Cluster (replicated table; empty for one server)", "hidden": "data.backend !== 'clickhouse'", "sm": 12, "md": 3 },
+                "clickhouse.quorum": { "type": "number", "label": "Insert quorum (2 on a replicated table)", "min": 0, "max": 9, "hidden": "data.backend !== 'clickhouse'", "sm": 12, "md": 3 },
+                "_ifxHeader": { "type": "header", "text": "InfluxDB 2", "size": 4, "hidden": "data.backend !== 'influxdb'", "newLine": true },
+                "influxdb.url": { "type": "text", "label": "Address (http://host:8086)", "hidden": "data.backend !== 'influxdb'", "sm": 12, "md": 6 },
+                "influxdb.org": { "type": "text", "label": "Organisation", "hidden": "data.backend !== 'influxdb'", "sm": 12, "md": 3 },
+                "influxdb.bucket": { "type": "text", "label": "Bucket", "hidden": "data.backend !== 'influxdb'", "sm": 12, "md": 3 },
+                "influxdb.token": { "type": "password", "label": "Token", "hidden": "data.backend !== 'influxdb'", "sm": 12, "md": 6, "newLine": true }
+            }
+        },
+        "_defaults": {
+            "type": "panel",
+            "label": "Defaults for states",
+            "items": {
+                "writeMode": {
+                    "type": "select",
+                    "label": "Write",
+                    "options": [
+                        { "label": "on change", "value": "change" },
+                        { "label": "every N seconds", "value": "interval" },
+                        { "label": "on change, but at least every N seconds", "value": "changeOrInterval" }
+                    ],
+                    "sm": 12,
+                    "md": 6
+                },
+                "writeInterval": { "type": "number", "label": "N (seconds)", "min": 0, "sm": 12, "md": 3, "hidden": "data.writeMode === 'change'" },
+                "changesMinDelta": { "type": "number", "label": "Deadband (absolute)", "min": 0, "sm": 12, "md": 3, "newLine": true },
+                "changesMinDeltaPercent": { "type": "number", "label": "Deadband (% of min..max)", "min": 0, "max": 100, "sm": 12, "md": 3 },
+                "debounceTime": { "type": "number", "label": "Debounce (ms)", "min": 0, "sm": 12, "md": 3 },
+                "retention": { "type": "number", "label": "Keep (days, 0 = always)", "min": 0, "sm": 12, "md": 3, "newLine": true },
+                "round": { "type": "text", "label": "Round reads to digits (empty = no)", "sm": 12, "md": 3 }
+            }
+        },
+        "_backlog": {
+            "type": "panel",
+            "label": "Backlog",
+            "items": {
+                "cap": { "type": "number", "label": "Backlog cap (changes; when full the oldest unwritten ones are dropped)", "min": 1000, "sm": 12, "md": 6 },
+                "batch": { "type": "number", "label": "Batch size", "min": 100, "max": 100000, "sm": 12, "md": 3 },
+                "_backlogInfo": { "type": "staticText", "text": "Alarms at 50 % and 90 % of the cap: state info.backlogAlarm and an error in the log.", "newLine": true, "sm": 12 }
+            }
+        },
+        "_licence": {
+            "type": "panel",
+            "label": "Licence",
+            "items": {
+                "licenceKey": { "type": "password", "label": "Licence key (or the vendor's activation response)", "sm": 12, "md": 12 },
+                "_licenceInfo": { "type": "staticText", "text": "Without a licence the history runs 14 days, then it stops completely until a key is entered. The state info.licence shows the status.", "newLine": true, "sm": 12 },
+                "_activation": { "type": "sendTo", "command": "activationRequest", "label": "Create the activation request of this server", "useNative": true, "variant": "outlined", "newLine": true, "sm": 12, "md": 6 },
+                "activationRequest": { "type": "textarea", "label": "Activation request: send it to the vendor, enter the key you get back above", "minRows": 3, "newLine": true, "sm": 12 }
+            }
+        }
+    }
+}
