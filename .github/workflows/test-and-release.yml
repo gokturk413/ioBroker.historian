@@ -1,0 +1,117 @@
+name: Test and Release
+# Checks run on every push. The engine-released dispatch of the private engine (gokturk413/my_historian_engine,
+# its release.yml) or a run by hand pulls the engine binaries of that release into bin/<platform>/ and builds the
+# npm package. The package is published to npm only when package.json is no longer "private" (the version comes
+# from package.json); until then the run is a dry run and keeps the package as an artifact.
+on:
+  push:
+    branches: ['*']
+  pull_request:
+  repository_dispatch:
+    types: [engine-released]
+  workflow_dispatch:
+    inputs:
+      engine:
+        description: 'Engine release tag (empty: the latest)'
+        type: string
+        default: ''
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+      - name: The package files are consistent
+        run: |
+          node -e "
+          const fs = require('fs');
+          const pkg = require('./package.json'), io = require('./io-package.json');
+          const fail = m => { console.error(m); process.exit(1); };
+          for (const f of ['admin/jsonConfig.json', 'admin/jsonCustom.json']) JSON.parse(fs.readFileSync(f, 'utf8'));
+          if (pkg.name !== 'iobroker.' + io.common.name) fail('package name and adapter name differ');
+          if (pkg.version !== io.common.version) fail('package.json ' + pkg.version + ' and io-package.json ' + io.common.version + ' differ');
+          if (!io.common.news || !io.common.news[pkg.version]) fail('io-package.json has no news for ' + pkg.version);
+          if (!/^(Native|Rust_Native)$/i.test(io.common.platform)) fail('common.platform is not native');
+          if (io.common.main !== 'bin/{platform}/historian') fail('common.main is not bin/{platform}/historian');
+          if (!fs.existsSync('admin/' + io.common.icon)) fail('the icon is missing');
+          console.log(pkg.name + ' ' + pkg.version + ': ok');
+          "
+
+  deploy:
+    needs: check
+    if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          registry-url: https://registry.npmjs.org
+      - name: Pull the engine release (one .gz per platform)
+        env:
+          GH_TOKEN: ${{ secrets.ENGINE_ASSETS_TOKEN }}
+          ENGINE_REPO: ${{ vars.ENGINE_REPO || 'gokturk413/my_historian_engine' }}
+          ENGINE_TAG: ${{ github.event.client_payload.version || inputs.engine || '' }}
+        run: |
+          [ -n "$GH_TOKEN" ] || { echo "::error::the ENGINE_ASSETS_TOKEN secret is missing"; exit 1; }
+          # a tag is a version, nothing else
+          case "$ENGINE_TAG" in ''|v[0-9]*) ;; *) echo "::error::not a release tag"; exit 1 ;; esac
+          rm -rf dl bin && mkdir dl
+          gh release download $ENGINE_TAG --repo "$ENGINE_REPO" --dir dl --pattern 'historian-*.gz' --pattern SHA256SUMS
+          (cd dl && sha256sum -c --ignore-missing SHA256SUMS)
+          # macOS is built by hand only until the first full release (~January 2027)
+          rids="win-x64 linux-x64 linux-arm64"
+          if [ -f dl/historian-osx-arm64.gz ]; then rids="$rids osx-arm64 osx-x64"
+          else echo "::warning::engine release without macOS binaries: the package has no osx-* engine"; fi
+          for rid in $rids; do
+            ext=""; case "$rid" in win-*) ext=.exe ;; esac
+            [ -s "dl/historian-$rid$ext.gz" ] || { echo "::error::the release has no historian-$rid$ext.gz"; exit 1; }
+            mkdir -p "bin/$rid"
+            gzip -dc "dl/historian-$rid$ext.gz" > "bin/$rid/historian$ext"
+            chmod 755 "bin/$rid/historian$ext"
+          done
+          rm -rf dl
+          ls -laR bin
+      # without the controller's environment the adapter says so and ends with 2: the binary loads and runs here
+      - name: The Linux engine runs
+        run: |
+          set +e
+          out="$(env -u IOB_INSTANCE bin/linux-x64/historian 2>&1)"; rc=$?
+          echo "$out (exit $rc)"
+          [ $rc = 2 ] && echo "$out" | grep -q 'started by js-controller'
+      - name: Build the package
+        run: |
+          npm pack
+          tar -tzf iobroker.historian-*.tgz | sort
+          for f in package/bin/win-x64/historian.exe package/bin/linux-x64/historian package/bin/linux-arm64/historian package/io-package.json package/admin/jsonConfig.json; do
+            tar -tzf iobroker.historian-*.tgz | grep -qx "$f" || { echo "::error::$f is not in the package"; exit 1; }
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: iobroker.historian-*.tgz
+          if-no-files-found: error
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          name=$(node -p "require('./package.json').name"); ver=$(node -p "require('./package.json').version")
+          if [ "$(node -p "require('./package.json').private === true")" = true ]; then
+            echo "::notice::$name@$ver is not published: package.json is private (dry run, the package is the artifact of this run)"
+          elif [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "::error::the NPM_TOKEN secret is missing"; exit 1
+          elif npm view "$name@$ver" version >/dev/null 2>&1; then
+            echo "$name@$ver is already on npm, nothing to publish"
+          else
+            npm publish --access public
+          fi

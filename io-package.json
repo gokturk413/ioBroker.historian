@@ -2,6 +2,13 @@
     "common": {
         "name": "historian",
         "version": "0.1.0",
+        "news": {
+            "0.1.0": {
+                "en": "First version: history of states from the Valkey stream of scada.js-controller into TimescaleDB, ClickHouse or InfluxDB 2, by a native engine; the custom settings of the history adapters; getHistory.",
+                "de": "Erste Version: Verlauf der Zustände aus dem Valkey-Stream des scada.js-controller in TimescaleDB, ClickHouse oder InfluxDB 2, mit nativer Engine; die Custom-Einstellungen der History-Adapter; getHistory.",
+                "ru": "Первая версия: история состояний из потока Valkey scada.js-controller в TimescaleDB, ClickHouse или InfluxDB 2, нативный движок; пользовательские настройки адаптеров истории; getHistory."
+            }
+        },
         "title": "Historian",
         "titleLang": {
             "en": "Historian",
